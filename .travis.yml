@@ -19,7 +19,7 @@ install:
   - mkdir "${GOPATH}/bin"
   - wget "https://github.com/Masterminds/glide/releases/download/v${GLIDE_VERSION}/glide-v${GLIDE_VERSION}-linux-amd64.tar.gz"
   - mkdir -p "${GOPATH}/bin"
-  - tar -vxz -C "${GOPATH}/bin" --strip=1 -f "glide-${GLIDE_VERSION}-linux-amd64.tar.gz"
+  - tar -vxz -C "${GOPATH}/bin" --strip=1 -f "glide-v${GLIDE_VERSION}-linux-amd64.tar.gz"
   - export PATH="${GOPATH}/bin:$PATH"  
   - glide install
   - go get github.com/h12w/gosweep
