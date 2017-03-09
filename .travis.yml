@@ -1,0 +1,27 @@
+language: go
+sudo: false
+
+cache:
+  directories:
+    - vendor/
+
+go:
+  - 1.7
+  - 1.6
+  - 1.5
+
+go_import_path: github.com/steenzout/go-
+
+install:
+  - curl https://glide.sh/get | sh
+  - glide install
+  - go get github.com/h12w/gosweep
+  - go get github.com/mattn/goveralls
+
+script:
+  - go test -v ./...
+
+after_success:
+  - bash ${GOPATH}/src/github.com/h12w/gosweep/gosweep.sh
+  - ${HOME}/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
+
