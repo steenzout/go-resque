@@ -6,9 +6,9 @@ cache:
     - vendor/
 
 go:
+  - 1.8
   - 1.7
   - 1.6
-  - 1.5
 
 go_import_path: github.com/steenzout/go-resque
 
