@@ -10,7 +10,7 @@ go:
   - 1.6
   - 1.5
 
-go_import_path: github.com/steenzout/go-
+go_import_path: github.com/steenzout/go-resque
 
 install:
   - curl https://glide.sh/get | sh
