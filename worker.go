@@ -15,57 +15,88 @@ type Performer interface {
 
 // Worker primitive to implement a consumer.
 type Worker struct {
+	// JobClass type of job being of executed.
 	JobClass JobClass
-	Done     <-chan bool
+	// Done channel to request the worker to stop execution.
+	Done <-chan bool
 }
 
-// Run .
+// Run worker until an error occurs or the worker is requested to quit.
 func (w Worker) Run() error {
-	var wg sync.WaitGroup
-
 	pubsub, err := w.JobClass.Queue.Subscribe()
 	if err != nil {
 		return err
 	}
-	input := make(chan Job, 1)
+
+	chan_in := make(chan Job, 1)
+	chan_err := make(chan error, 1)
+	chan_exit := make(chan bool, 1)
+
+	var wg sync.WaitGroup
 
 	defer func() {
 		wg.Wait()
+		close(chan_in)
+		close(chan_err)
+		close(chan_exit)
 		pubsub.Close()
 	}()
 
-	go consume(pubsub, input)
+	go consume(pubsub, chan_in, chan_err, chan_exit, wg)
+	chan_exit <- false
 
 	for {
 		select {
-		case job := <-input:
+		case job := <-chan_in:
 			w.JobClass.Performer.Perform(job.Args...)
+
+			// ready for the next message
+			chan_exit <- false
+
+		case err = chan_err:
+			chan_exit <- true
+			return err
+
 		case <-w.Done:
-			close(input)
+			chan_exit <- true
 			return nil
 		}
 	}
 }
 
-func consume(pubsub *redis.PubSub, c <-chan Job) {
+// consume retrieves a message from a Redis subscription,
+// transforms it into a Job and
+// send to the input channel.
+// In case of error during this process,
+// it will send the error message to an error channel.
+func consume(pubsub *redis.PubSub, chan_in <-chan Job, chan_err <-chan error, chan_exit <-chan bool, wg sync.WaitGroup) {
+	defer wg.Done()
+
 	var job Job
 
-	defer func() { recover() }()
-
 	for {
-		msg, err := pubsub.ReceiveMessage()
-		if err != nil {
-			continue
-		}
+		select {
+		case quit := <-chan_exit:
+			if quit {
+				return
+			}
 
-		job = Job{}
-		err = json.Unmarshal([]byte(msg.Payload), &job)
-		if err != nil {
-			continue
-		}
+			for {
+				msg, err := pubsub.ReceiveMessage()
+				if err != nil {
+					chan_err <- err
+					continue
+				}
 
-		c <- job
+				job = Job{}
+				err = json.Unmarshal([]byte(msg.Payload), &job)
+				if err != nil {
+					chan_err <- err
+					continue
+				}
+
+				chan_in <- job
+			}
+		}
 	}
-
-	return
 }
