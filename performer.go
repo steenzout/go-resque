@@ -16,8 +16,8 @@
 
 package resque
 
-// Performer interface that each consumer/worker must implement.
+// Performer interface that any job processing struct must implement.
 type Performer interface {
 	// Perform consumes the given payload.
-	Perform(args ...JobArgument)
+	Perform(args ...JobArgument) (interface{}, error)
 }
