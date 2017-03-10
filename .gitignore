@@ -1,5 +1,6 @@
 cmd/consumer/consumer
 cmd/producer/producer
+profile.cov
 vendor/
 
 # Created by https://www.gitignore.io/api/go
