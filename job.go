@@ -33,17 +33,3 @@ type Job struct {
 	Class string        `json:"class"`
 	Args  []JobArgument `json:"args"`
 }
-
-// JobClass links a queue to a worker.
-type JobClass struct {
-	Queue     *Queue
-	Performer Performer
-}
-
-// NewJobClass creates a new JobClass pointer.
-func NewJobClass(q *Queue, p Performer) *JobClass {
-	return &JobClass{
-		Queue:     q,
-		Performer: p,
-	}
-}
