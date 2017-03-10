@@ -7,12 +7,6 @@ import (
 	"github.com/go-redis/redis"
 )
 
-// Performer interface that each consumer/worker must implement.
-type Performer interface {
-	// Perform consumes the given payload.
-	Perform(args ...JobArgument)
-}
-
 // Worker primitive to implement a consumer.
 type Worker struct {
 	// JobClass type of job being of executed.
