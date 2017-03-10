@@ -6,7 +6,6 @@ import:
 - package: golang.org/x/tools
   subpackages:
   - cmd/goimports
-- package: gopkg.in/urfave/cli.v2
 - package: github.com/golang/lint
 - package: github.com/go-redis/redis
   version: ^5.2.9
