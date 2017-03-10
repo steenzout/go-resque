@@ -32,3 +32,16 @@ after_success:
   - bash ${GOPATH}/src/github.com/h12w/gosweep/gosweep.sh
   - ${HOME}/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
 
+notifications:
+  email: false
+  slack:
+    template:
+      - "%{repository_name}@%{branch} %{commit} : [%{build_number}] %{result} "
+      - "%{build_url}"
+      - "'%{commit_subject}' by %{author}"
+      - "%{elapsed_time} : %{duration}"
+      - "%{message}"
+    rooms:
+      secure: "R8Cx2JIRNPiqWjzKbYzQGR4b8HAz6XKmneoRe7k0cumKf5QA4/CA1zSCiWdDUz5PmqFTMmmxhWGQorAPPZWq6uwu0FfWFl5LZS/G2Ny7tRSJAzPxvD912Ci77rwhAqXiIpIMjTxNQN282ZIXvMEUrO3hyiFFasOg2EDcC/G7srOhW8qXUClLHv0zhDhFxXsQqaGjyLguqcNNkaUF3wOjN6D5alN5iTb/psLD2ssUZX3sLkxtDf3tIBPnNoyxHGvIp0+TpMdReitetlnAPhc1Xdnnof2Ooq1UNcRRX0Y43GuzR/x8KmoDWD0LUe8U4gGA/KNyslE4XnAvVDxv4qH268zp6GSCLyjvh5uDiuOtM800Tb65I0POP56xrjts3hW4kdjHKZyCBIMRt9K1HO2X0t1SLe03iPzhQ6Ie4WIC+u3PfLyVl/KmuXBp0eFu8qjStQKvoyW9kW1atN1L5Rdv3yR/eUJ/Dxn+RR0dxADn/PojLd83eJCpefyvjGgh8QngDwVQnuxpkAbAINTllSBullZF6zAAGdmZ1kLvQcvAF24ica0o46/G+hdLK3rznetom0RhutnEaROaWK6Xl30XRL/3Goh45Fg9efBPWDycRztbaT9kkSiOYxqyt2EbTcJNmnidN7iuv3zO/ZvDKQiYir4PLVIGVYA9/p5JumQ5BHQ="
+    on_success: always
+    on_failure: always
