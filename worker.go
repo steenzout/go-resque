@@ -79,7 +79,7 @@ func (w Worker) Run() error {
 // send to the input channel.
 // In case of error during this process,
 // it will send the error message to an error channel.
-func consume(pubsub *redis.PubSub, chan_in <-chan Job, chan_err <-chan error, chan_exit <-chan bool, wg sync.WaitGroup) {
+func consume(pubsub *redis.PubSub, chan_in chan Job, chan_err chan error, chan_exit <-chan bool, wg sync.WaitGroup) {
 	defer wg.Done()
 
 	var job Job
