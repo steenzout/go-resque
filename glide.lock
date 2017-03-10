@@ -1,8 +1,12 @@
-hash: 94ab7ec60def20a925b35eeae5bd09394285a4cb73547e89f4669dbc2702247e
-updated: 1969-12-31T17:00:00-07:00
+hash: 9f3af29918d9ea99c43414092324cb4404ff37e3bb250a6ebd1ebef1e9466ede
+updated: 2017-03-10T15:49:10.70848291-07:00
 imports:
 - name: github.com/go-redis/redis
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
+- name: github.com/h12w/gosweep
+  version: eb73d060a5d78c0aa1b2bfbcdbb6b981f5c1edf2
+- name: github.com/mattn/goveralls
+  version: 9d621f6940639bf287ecbb6f585a2c26eeba3bbe
 - name: gopkg.in/redis.v5
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
   subpackages:
