@@ -22,11 +22,11 @@ install:
   - tar -vxz -C "${GOPATH}/bin" --strip=1 -f "glide-v${GLIDE_VERSION}-linux-amd64.tar.gz"
   - export PATH="${GOPATH}/bin:$PATH"
   - glide install
-  - go get github.com/h12w/gosweep
-  - go get github.com/mattn/goveralls
+  - glide get github.com/h12w/gosweep
+  - glide get github.com/mattn/goveralls
 
 script:
-  - go test -v ./...
+  - bash ${GOPATH}/src/github.com/h12w/gosweep/gosweep.sh
 
 after_success:
   - bash ${GOPATH}/src/github.com/h12w/gosweep/gosweep.sh
