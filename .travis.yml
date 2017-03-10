@@ -13,6 +13,7 @@ go:
 go_import_path: github.com/steenzout/go-resque
 
 env:
+  - CI_SERVICE="travis-ci"
   - GLIDE_VERSION="0.12.3"
 
 install:
@@ -24,11 +25,7 @@ install:
   - glide install
 
 script:
-  - bash ${GOPATH}/src/github.com/h12w/gosweep/gosweep.sh
-
-after_success:
-  - bash ${GOPATH}/src/github.com/h12w/gosweep/gosweep.sh
-  - ${HOME}/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
+  - bash vendor/github.com/h12w/gosweep/gosweep.sh
 
 notifications:
   email: false
