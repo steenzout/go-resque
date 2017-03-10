@@ -18,41 +18,50 @@ package resque
 
 import (
 	"encoding/json"
+	"fmt"
 
-	"github.com/go-redis/redis"
+	"gopkg.in/redis.v5"
 )
 
 // Queue a job queue.
 type Queue struct {
-	Name  string
-	Redis *redis.Client
+	redis        *redis.Client
+	jobClassName string
+	Name         string
 }
 
-// NewQueue links a job queue to a Redis instance.
-func NewQueue(n string, c *redis.Client) *Queue {
+// newQueue links a job queue to a redis instance.
+func newQueue(jcn string, c *redis.Client) *Queue {
 	return &Queue{
-		Name:  n,
-		Redis: c,
+		redis:        c,
+		jobClassName: jcn,
+		Name:         fmt.Sprintf("resque:queue:%s", jcn),
 	}
 }
 
-// Put places a job on the queue.
-func (q *Queue) Put(j *Job) error {
-	json, err := json.Marshal(j)
-	if err != nil {
-		return err
-	}
-
-	cmd := q.Redis.RPush(q.Name, json)
-	return cmd.Err()
-}
-
-// Subscribe returns a queue subscriber.
-func (q *Queue) Subscribe() (*redis.PubSub, error) {
-	pubsub, err := q.Redis.Subscribe(q.Name)
+// Receive gets a job from the queue.
+func (q Queue) Receive() (*Job, error) {
+	cmd := q.redis.LPop(q.Name)
+	json_str, err := cmd.Bytes()
 	if err != nil {
 		return nil, err
 	}
 
-	return pubsub, nil
+	job := &Job{}
+	err = json.Unmarshal(json_str, job)
+	if err != nil {
+		return nil, err
+	}
+
+	return job, err
+}
+
+// Send places a job on the queue.
+func (q Queue) Send(args []JobArgument) error {
+	json_str, err := json.Marshal(Job{Class: q.jobClassName})
+	if err != nil {
+		return err
+	}
+
+	return q.redis.RPush(q.Name, json_str).Err()
 }
