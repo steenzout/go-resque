@@ -25,7 +25,7 @@ install:
   - glide install
 
 script:
-  - bash vendor/github.com/h12w/gosweep/gosweep.sh
+  - bash vendor/github.com/steenzout/bash-gosweep/gosweep.sh
 
 notifications:
   email: false
