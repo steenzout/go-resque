@@ -17,95 +17,105 @@
 package resque
 
 import (
-	"encoding/json"
 	"sync"
 
-	"github.com/go-redis/redis"
+	"gopkg.in/redis.v5"
 )
 
-// Worker primitive to implement a consumer.
+// Worker primitive to implement producers or consumers.
 type Worker struct {
-	// JobClass type of job being of executed.
-	JobClass JobClass
-	// Done channel to request the worker to stop execution.
-	Done <-chan bool
+	Name      string
+	Queue     *Queue
+	Performer Performer
 }
 
-// Run worker until an error occurs or the worker is requested to quit.
-func (w Worker) Run() error {
-	pubsub, err := w.JobClass.Queue.Subscribe()
-	if err != nil {
-		return err
+// NewWorker creates a new JobClass pointer.
+func NewWorker(n string, c *redis.Client, p Performer) *Worker {
+	return &Worker{
+		Name:      n,
+		Queue:     newQueue(n, c),
+		Performer: p,
 	}
+}
 
-	chan_in := make(chan Job, 1)
-	chan_err := make(chan error, 1)
-	chan_exit := make(chan bool, 1)
-
-	var wg sync.WaitGroup
-
-	defer func() {
-		wg.Wait()
-		close(chan_in)
-		close(chan_err)
-		close(chan_exit)
-		pubsub.Close()
-	}()
-
-	go consume(pubsub, chan_in, chan_err, chan_exit, wg)
-	chan_exit <- false
+// Consume routine.
+func (w Worker) Consume(wg sync.WaitGroup, chanOut chan Job, chanErr chan error, chanQuit <-chan bool) {
+	defer wg.Done()
 
 	for {
 		select {
-		case job := <-chan_in:
-			w.JobClass.Performer.Perform(job.Args...)
+		case stop := <-chanQuit:
+			if stop {
+				return
+			}
 
-			// ready for the next message
-			chan_exit <- false
+			job, err := w.Queue.Receive()
+			if err != nil {
+				chanErr <- err
+			}
 
-		case err = chan_err:
-			chan_exit <- true
-			return err
-
-		case <-w.Done:
-			chan_exit <- true
-			return nil
+			chanOut <- *job
 		}
 	}
 }
 
-// consume retrieves a message from a Redis subscription,
-// transforms it into a Job and
-// send to the input channel.
-// In case of error during this process,
-// it will send the error message to an error channel.
-func consume(pubsub *redis.PubSub, chan_in chan Job, chan_err chan error, chan_exit <-chan bool, wg sync.WaitGroup) {
-	defer wg.Done()
+// Process routine.
+func (w Worker) Process(wg sync.WaitGroup, chanOut chan interface{}, chanErr chan error, chanQuit <-chan bool) {
 
-	var job Job
+	chan_in := make(chan Job, 1)
+	chan_qerror := make(chan error, 1)
+	chan_stop := make(chan bool, 1)
+
+	defer func() {
+		wg.Done()
+		close(chan_in)
+		close(chan_qerror)
+		close(chan_stop)
+	}()
+
+	go w.Consume(wg, chan_in, chanErr, chan_stop)
+	wg.Add(1)
 
 	for {
 		select {
-		case quit := <-chan_exit:
+		case <-chanQuit:
+			chan_stop <- true
+			return
+
+		case err := <-chan_qerror:
+			chanErr <- err
+
+			// signal to get the next message
+			chan_stop <- false
+
+		case job := <-chan_in:
+			out, err := w.Performer.Perform(job.Args...)
+			if err != nil {
+				chanErr <- err
+			}
+
+			chanOut <- out
+
+			// signal to get the next message
+			chan_stop <- false
+		}
+	}
+}
+
+// Produce routine.
+func (w Worker) Produce(wg sync.WaitGroup, chanIn <-chan Job, chanErr chan error, chanQuit <-chan bool) {
+	defer wg.Done()
+
+	for {
+		select {
+		case quit := <-chanQuit:
 			if quit {
 				return
 			}
-
-			for {
-				msg, err := pubsub.ReceiveMessage()
-				if err != nil {
-					chan_err <- err
-					continue
-				}
-
-				job = Job{}
-				err = json.Unmarshal([]byte(msg.Payload), &job)
-				if err != nil {
-					chan_err <- err
-					continue
-				}
-
-				chan_in <- job
+		case job := <-chanIn:
+			err := w.Queue.Send(job.Args)
+			if err != nil {
+				chanErr <- err
 			}
 		}
 	}
