@@ -1,5 +1,5 @@
-hash: 697dd51264afffaea7d884b8cfac80154a66a337c3305d439f8e518653c3ed60
-updated: 2017-03-10T09:03:48.574892365-07:00
+hash: 94ab7ec60def20a925b35eeae5bd09394285a4cb73547e89f4669dbc2702247e
+updated: 1969-12-31T17:00:00-07:00
 imports:
 - name: github.com/go-redis/redis
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
@@ -12,5 +12,5 @@ imports:
   - internal/pool
   - internal/proto
 - name: gopkg.in/urfave/cli.v2
-  version: 04b2f4ff79cf1fd71e138bafc67df8bbdb5b81c2
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 testImports: []

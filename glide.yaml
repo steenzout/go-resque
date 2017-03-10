@@ -1,4 +1,6 @@
 package: github.com/steenzout/go-resque
 import:
 - package: github.com/go-redis/redis
+  version: ^5.2.9
 - package: gopkg.in/urfave/cli.v2
+  version: ^1.19.1
