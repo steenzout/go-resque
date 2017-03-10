@@ -1,12 +1,18 @@
-hash: 9f3af29918d9ea99c43414092324cb4404ff37e3bb250a6ebd1ebef1e9466ede
-updated: 2017-03-10T15:49:10.70848291-07:00
+hash: 285e8c4d9914ff84d25119692fb82681da85fd9d475f35a00561ad77cde7a058
+updated: 2017-03-10T16:49:57.558491913-07:00
 imports:
 - name: github.com/go-redis/redis
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
-- name: github.com/h12w/gosweep
-  version: eb73d060a5d78c0aa1b2bfbcdbb6b981f5c1edf2
+- name: github.com/golang/lint
+  version: cb00e5669539f047b2f4c53a421a01b0c8e172c6
 - name: github.com/mattn/goveralls
   version: 9d621f6940639bf287ecbb6f585a2c26eeba3bbe
+- name: github.com/steenzout/bash-gosweep
+  version: cd7d91dfb79e047379f847a0d0fb7a42a628461a
+- name: golang.org/x/tools
+  version: f60b69ed8cd7a29e91f87050ae23a29581a0f367
+  subpackages:
+  - cmd/goimports
 - name: gopkg.in/redis.v5
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
   subpackages:
@@ -16,5 +22,5 @@ imports:
   - internal/pool
   - internal/proto
 - name: gopkg.in/urfave/cli.v2
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+  version: 04b2f4ff79cf1fd71e138bafc67df8bbdb5b81c2
 testImports: []
