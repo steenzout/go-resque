@@ -1,12 +1,5 @@
 package: github.com/steenzout/go-resque
 import:
-- package: github.com/mattn/goveralls
-  version: ^0.0.1
 - package: github.com/steenzout/bash-gosweep
-- package: golang.org/x/tools
-  subpackages:
-  - cmd/goimports
-- package: github.com/golang/lint
 - package: github.com/go-redis/redis
   version: ^5.2.9
-- package: github.com/gordonklaus/ineffassign

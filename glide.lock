@@ -1,20 +1,10 @@
-hash: bbc3013366132eb5d153aec6fe10bb600be462a83bef6a7f42d70bba29d170e8
-updated: 2017-03-10T17:01:52.515259821-07:00
+hash: eb09a1b3e225be633df3c0948294545f79dd29bf99d9dbb8b22c93882feaa48f
+updated: 2017-03-10T17:08:14.344557053-07:00
 imports:
 - name: github.com/go-redis/redis
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
-- name: github.com/golang/lint
-  version: cb00e5669539f047b2f4c53a421a01b0c8e172c6
-- name: github.com/gordonklaus/ineffassign
-  version: 99762ed65232b1477364c8c53778f8b6503e868c
-- name: github.com/mattn/goveralls
-  version: 9d621f6940639bf287ecbb6f585a2c26eeba3bbe
 - name: github.com/steenzout/bash-gosweep
-  version: cd7d91dfb79e047379f847a0d0fb7a42a628461a
-- name: golang.org/x/tools
-  version: f60b69ed8cd7a29e91f87050ae23a29581a0f367
-  subpackages:
-  - cmd/goimports
+  version: 6d9f60597dde290810d1bccb2a51683d2c13e488
 - name: gopkg.in/redis.v5
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
   subpackages:
