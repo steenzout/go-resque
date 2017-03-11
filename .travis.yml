@@ -23,9 +23,14 @@ install:
   - tar -vxz -C "${GOPATH}/bin" --strip=1 -f "glide-v${GLIDE_VERSION}-linux-amd64.tar.gz"
   - export PATH="${GOPATH}/bin:$PATH"
   - glide install
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools
+  - go get github.com/golang/lint
+  - go get github.com/gordonklaus/ineffassign
+  - go get github.com/steenzout/bash-gosweep
 
 script:
-  - bash vendor/github.com/steenzout/bash-gosweep/gosweep.sh
+  - bash "${GOPATH}/src/github.com/steenzout/bash-gosweep/gosweep.sh"
 
 notifications:
   email: false
