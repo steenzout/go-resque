@@ -24,7 +24,7 @@ install:
   - export PATH="${GOPATH}/bin:$PATH"
   - glide install
   - go get github.com/mattn/goveralls
-  - go get golang.org/x/tools
+  - go get golang.org/x/tools/cmd/goimports
   - go get github.com/golang/lint
   - go get github.com/gordonklaus/ineffassign
   - go get github.com/steenzout/bash-gosweep
