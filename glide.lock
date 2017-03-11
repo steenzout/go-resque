@@ -1,10 +1,12 @@
-hash: 668fdc46311e6b1249365899c548012de307d84de96754c7cf3532c57bf6aeee
-updated: 2017-03-10T16:55:23.317749218-07:00
+hash: bbc3013366132eb5d153aec6fe10bb600be462a83bef6a7f42d70bba29d170e8
+updated: 2017-03-10T17:01:52.515259821-07:00
 imports:
 - name: github.com/go-redis/redis
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
 - name: github.com/golang/lint
   version: cb00e5669539f047b2f4c53a421a01b0c8e172c6
+- name: github.com/gordonklaus/ineffassign
+  version: 99762ed65232b1477364c8c53778f8b6503e868c
 - name: github.com/mattn/goveralls
   version: 9d621f6940639bf287ecbb6f585a2c26eeba3bbe
 - name: github.com/steenzout/bash-gosweep
