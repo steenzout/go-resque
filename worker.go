@@ -60,12 +60,13 @@ func (w Worker) Consume(wg sync.WaitGroup, chanOut chan Job, chanErr chan error,
 }
 
 // Process routine.
-func (w Worker) Process(wg sync.WaitGroup, chanOut chan interface{}, chanErr chan error, chanQuit <-chan bool) {
+func (w Worker) Process(wg *sync.WaitGroup, chanOut chan interface{}, chanErr chan error, chanQuit <-chan bool) {
 
 	chan_in := make(chan Job, 1)
 	chan_qerror := make(chan error, 1)
 	chan_stop := make(chan bool, 1)
 
+	wg.Add(1)
 	defer func() {
 		wg.Done()
 		close(chan_in)
@@ -74,7 +75,6 @@ func (w Worker) Process(wg sync.WaitGroup, chanOut chan interface{}, chanErr cha
 	}()
 
 	go w.Consume(wg, chan_in, chanErr, chan_stop)
-	wg.Add(1)
 
 	for {
 		select {
@@ -103,7 +103,9 @@ func (w Worker) Process(wg sync.WaitGroup, chanOut chan interface{}, chanErr cha
 }
 
 // Produce routine.
-func (w Worker) Produce(wg sync.WaitGroup, chanIn <-chan Job, chanErr chan error, chanQuit <-chan bool) {
+func (w Worker) Produce(wg *sync.WaitGroup, chanIn <-chan Job, chanErr chan error, chanQuit <-chan bool) {
+
+	wg.Add(1)
 	defer wg.Done()
 
 	for {
