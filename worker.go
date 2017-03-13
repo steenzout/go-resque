@@ -39,7 +39,7 @@ func NewWorker(n string, c *redis.Client, p Performer) *Worker {
 }
 
 // Consume routine.
-func (w Worker) Consume(wg sync.WaitGroup, chanOut chan Job, chanErr chan error, chanQuit <-chan bool) {
+func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan Job, chanErr chan error, chanQuit <-chan bool) {
 	defer wg.Done()
 
 	for {
