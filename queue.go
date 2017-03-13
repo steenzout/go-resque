@@ -23,6 +23,11 @@ import (
 	"gopkg.in/redis.v5"
 )
 
+const (
+	// Queues name of the key for the set where Resque stores the currently available queues.
+	Queues = "resque:queues"
+)
+
 // Queue a job queue.
 type Queue struct {
 	redis        *redis.Client
@@ -30,13 +35,26 @@ type Queue struct {
 	Name         string
 }
 
-// newQueue links a job queue to a redis instance.
-func newQueue(jcn string, c *redis.Client) *Queue {
-	return &Queue{
+// newQueue initializes a Queue struct and updates the set of available Resque queues.
+func newQueue(jcn string, c *redis.Client) (*Queue, error) {
+	q := &Queue{
 		redis:        c,
 		jobClassName: jcn,
 		Name:         fmt.Sprintf("resque:queue:%s", jcn),
 	}
+
+	exists, err := c.SIsMember(Queues, q.Name).Result()
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		_, err := c.SAdd(Queues, q.Name).Result()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return q, nil
 }
 
 // Receive gets a job from the queue.
