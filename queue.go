@@ -42,6 +42,13 @@ func newQueue(jcn string, c *redis.Client) *Queue {
 // Receive gets a job from the queue.
 func (q Queue) Receive() (*Job, error) {
 	cmd := q.redis.LPop(q.Name)
+	if cmd.Err() != nil {
+		if cmd.Err().Error() == "redis: nil" {
+			return nil, nil
+		}
+		return nil, cmd.Err()
+	}
+
 	jsonStr, err := cmd.Bytes()
 	if err != nil {
 		return nil, err
