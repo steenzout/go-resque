@@ -19,6 +19,7 @@ package resque
 import (
 	"sync"
 
+	"fmt"
 	"gopkg.in/redis.v5"
 )
 
@@ -66,7 +67,6 @@ func (w Worker) Process(wg *sync.WaitGroup, chanOut chan interface{}, chanErr ch
 	chanQErr := make(chan error, 1)
 	chanStop := make(chan bool, 1)
 
-	wg.Add(1)
 	defer func() {
 		wg.Done()
 		close(chanIn)
@@ -105,7 +105,6 @@ func (w Worker) Process(wg *sync.WaitGroup, chanOut chan interface{}, chanErr ch
 // Produce routine.
 func (w Worker) Produce(wg *sync.WaitGroup, chanIn <-chan Job, chanErr chan error, chanQuit <-chan bool) {
 
-	wg.Add(1)
 	defer wg.Done()
 
 	for {
