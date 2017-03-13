@@ -19,7 +19,6 @@ package resque
 import (
 	"sync"
 
-	"fmt"
 	"gopkg.in/redis.v5"
 )
 
