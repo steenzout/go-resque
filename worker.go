@@ -18,23 +18,28 @@ package resque
 
 import (
 	"sync"
+	"time"
 
 	"gopkg.in/redis.v5"
 )
 
 // Worker primitive to implement producers or consumers.
 type Worker struct {
-	Name      string
-	Queue     *Queue
-	Performer Performer
+	Name                string
+	Queue               *Queue
+	Performer           Performer
+	waitBetweenMessages time.Duration
+	waitForMessage      time.Duration
 }
 
 // NewWorker creates a new JobClass pointer.
 func NewWorker(n string, c *redis.Client, p Performer) *Worker {
 	return &Worker{
-		Name:      n,
-		Queue:     newQueue(n, c),
-		Performer: p,
+		Name:                n,
+		Queue:               newQueue(n, c),
+		Performer:           p,
+		waitBetweenMessages: time.Duration(10 * time.Millisecond),
+		waitForMessage:      time.Duration(1 * time.Second),
 	}
 }
 
@@ -44,17 +49,21 @@ func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan Job, chanErr chan error
 
 	for {
 		select {
-		case stop := <-chanQuit:
-			if stop {
-				return
-			}
+		case <-chanQuit:
+			return
+
+		case <-time.After(w.waitBetweenMessages):
 
 			job, err := w.Queue.Receive()
 			if err != nil {
 				chanErr <- err
 			}
 
-			chanOut <- *job
+			if job == nil {
+				time.Sleep(w.waitForMessage)
+			} else {
+				chanOut <- *job
+			}
 		}
 	}
 }
@@ -108,10 +117,8 @@ func (w Worker) Produce(wg *sync.WaitGroup, chanIn <-chan Job, chanErr chan erro
 
 	for {
 		select {
-		case quit := <-chanQuit:
-			if quit {
-				return
-			}
+		case <-chanQuit:
+			return
 		case job := <-chanIn:
 			err := w.Queue.Send(job.Args)
 			if err != nil {
