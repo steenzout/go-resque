@@ -6,12 +6,12 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"gopkg.in/redis.v5"
 
 	"github.com/steenzout/go-resque"
 	"github.com/steenzout/go-resque/test/log"
-	"time"
 )
 
 const (
@@ -37,8 +37,14 @@ func main() {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
+	log.Infof(Package, "Redis client set %v", client)
 
-	worker := resque.NewWorker("Multiplier", client, &Multiplier{})
+	worker, err := resque.NewWorker("Multiplier", client, &Multiplier{})
+	if err != nil {
+		panic(err)
+	}
+	log.Infof(Package, "queue %s created", worker.Queue.Name)
+	log.Infof(Package, "worker %s created", worker.Name)
 
 	var wg sync.WaitGroup
 	chanIn := make(chan resque.Job, 1)
@@ -70,7 +76,7 @@ func main() {
 		close(chanQuit3)
 	}()
 
-	wg.Add(3)
+	wg.Add(1)
 	go worker.Produce(&wg, chanIn, chanErr, chanQuit)
 	go worker.Consume(&wg, chanOut, chanErr2, chanQuit2)
 	go worker.Process(&wg, chanOut2, chanErr3, chanQuit3)
@@ -90,19 +96,19 @@ func main() {
 			return
 
 		case err := <-chanErr:
-			fmt.Printf("Producer error: %s\n", err.Error())
+			log.Errorf(Package, "Producer error: %s\n", err.Error())
 
 		case err := <-chanErr2:
-			fmt.Printf("Consumer error: %s\n", err.Error())
+			log.Errorf(Package, "Consumer error: %s\n", err.Error())
 
 		case err := <-chanErr3:
-			fmt.Printf("Process error: %s\n", err.Error())
+			log.Errorf(Package, "Perform error %s\n", err.Error())
 
 		case job := <-chanOut:
-			fmt.Printf("Consume job %s %v\n", job.Class, job.Args)
+			log.Infof(Package, "Message from queue = %s %v\n", job.Class, job.Args)
 
 		case value := <-chanOut2:
-			fmt.Printf("Job output = %v\n", value)
+			log.Infof(Package, "job output = %v", value)
 
 		case <-time.After(wait):
 			// queue new job
@@ -115,7 +121,7 @@ func main() {
 				Args:  args,
 			}
 			chanIn <- job
-			log.Infof(Package, "queued 1 job %s: %v", job.Class, job.Args)
+			log.Infof(Package, "sent request to queue 1 job %s: %v", job.Class, job.Args)
 		}
 	}
 }
