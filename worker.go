@@ -33,14 +33,19 @@ type Worker struct {
 }
 
 // NewWorker creates a new JobClass pointer.
-func NewWorker(n string, c *redis.Client, p Performer) *Worker {
+func NewWorker(n string, c *redis.Client, p Performer) (*Worker, error) {
+	q, err := newQueue(n, c)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Worker{
 		Name:                n,
-		Queue:               newQueue(n, c),
+		Queue:               q,
 		Performer:           p,
 		waitBetweenMessages: time.Duration(10 * time.Millisecond),
 		waitForMessage:      time.Duration(1 * time.Second),
-	}
+	}, nil
 }
 
 // Consume routine.
