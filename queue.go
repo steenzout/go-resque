@@ -42,13 +42,13 @@ func newQueue(jcn string, c *redis.Client) *Queue {
 // Receive gets a job from the queue.
 func (q Queue) Receive() (*Job, error) {
 	cmd := q.redis.LPop(q.Name)
-	json_str, err := cmd.Bytes()
+	jsonStr, err := cmd.Bytes()
 	if err != nil {
 		return nil, err
 	}
 
 	job := &Job{}
-	err = json.Unmarshal(json_str, job)
+	err = json.Unmarshal(jsonStr, job)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +58,10 @@ func (q Queue) Receive() (*Job, error) {
 
 // Send places a job on the queue.
 func (q Queue) Send(args []JobArgument) error {
-	json_str, err := json.Marshal(Job{Class: q.jobClassName})
+	jsonStr, err := json.Marshal(Job{Class: q.jobClassName})
 	if err != nil {
 		return err
 	}
 
-	return q.redis.RPush(q.Name, json_str).Err()
+	return q.redis.RPush(q.Name, jsonStr).Err()
 }
