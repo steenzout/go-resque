@@ -58,7 +58,7 @@ func (q Queue) Receive() (*Job, error) {
 
 // Send places a job on the queue.
 func (q Queue) Send(args []JobArgument) error {
-	jsonStr, err := json.Marshal(Job{Class: q.jobClassName})
+	jsonStr, err := json.Marshal(Job{Class: q.jobClassName, Args: args})
 	if err != nil {
 		return err
 	}
