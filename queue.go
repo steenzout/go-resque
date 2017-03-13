@@ -43,12 +43,12 @@ func newQueue(jcn string, c *redis.Client) (*Queue, error) {
 		Name:         fmt.Sprintf("resque:queue:%s", jcn),
 	}
 
-	exists, err := c.SIsMember(Queues, q.Name).Result()
+	exists, err := c.SIsMember(Queues, jcn).Result()
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		_, err := c.SAdd(Queues, q.Name).Result()
+		_, err := c.SAdd(Queues, jcn).Result()
 		if err != nil {
 			return nil, err
 		}
