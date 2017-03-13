@@ -1,6 +1,7 @@
 cmd/consumer/consumer
 cmd/producer/producer
 profile.cov
+test/integration/integration
 vendor/
 
 # Created by https://www.gitignore.io/api/go
