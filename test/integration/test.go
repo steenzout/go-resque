@@ -73,7 +73,7 @@ func main() {
 		close(chanQuit3)
 	}()
 
-	wg.Add(1)
+	wg.Add(2)
 	go worker.Produce(&wg, chanIn, chanErr, chanQuit)
 	go worker.Process(&wg, chanOut2, chanErr3, chanQuit3)
 
