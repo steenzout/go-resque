@@ -32,7 +32,7 @@ type Worker struct {
 
 // NewWorker creates a new JobClass pointer.
 func NewWorker(n string, c *redis.Client, p Performer, timeout time.Duration) (*Worker, error) {
-	q, err := newQueue(n, c, timeout)
+	q, err := NewQueue(n, c, timeout)
 	if err != nil {
 		return nil, err
 	}
