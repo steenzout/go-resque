@@ -1,17 +1,31 @@
-hash: 57d45ca45f2f3984e40cd7e4c45be7d71bd05012748e0c10a8b16a2712799bb9
-updated: 2017-03-13T10:29:19.908392058-06:00
+hash: 9fc3a4d4dd21e8f9001a3b5807608ab2248b2da1fb9a24479c76821338e980c9
+updated: 2017-03-14T15:40:46.132684734-06:00
 imports:
-- name: github.com/go-redis/redis
-  version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
+- name: github.com/fatih/color
+  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
+- name: github.com/mattn/go-colorable
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
+- name: github.com/mattn/go-isatty
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/steenzout/bash-gosweep
-  version: 6d9f60597dde290810d1bccb2a51683d2c13e488
+  version: 598425e2241e0806f834d1e925b3f44a650ab275
 - name: github.com/steenzout/go-log
   version: f61d675de0a37acbe11b8eb9d2effcf4e2616460
   subpackages:
   - fields
-  - formatters
   - fields/severity
+  - filters/severity
+  - formatters
+  - loggers/simple
+  - managers/simple
   - fields/timestamp
+- name: golang.org/x/sys
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  repo: https://go.googlesource.com/sys
+  subpackages:
+  - unix
 - name: gopkg.in/redis.v5
   version: a16aeec10ff407b1e7be6dd35797ccf5426ef0f0
   subpackages:
