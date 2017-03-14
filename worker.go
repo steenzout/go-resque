@@ -33,23 +33,21 @@ type Worker struct {
 }
 
 // NewWorker creates a new JobClass pointer.
-func NewWorker(n string, c *redis.Client, p Performer) (*Worker, error) {
-	q, err := newQueue(n, c)
+func NewWorker(n string, c *redis.Client, p Performer, timeout time.Duration) (*Worker, error) {
+	q, err := newQueue(n, c, timeout)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Worker{
-		Name:                n,
-		Queue:               q,
-		Performer:           p,
-		waitBetweenMessages: time.Duration(10 * time.Millisecond),
-		waitForMessage:      time.Duration(1 * time.Second),
+		Name:      n,
+		Queue:     q,
+		Performer: p,
 	}, nil
 }
 
 // Consume routine.
-func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan Job, chanErr chan error, chanQuit <-chan bool) {
+func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan *Job, chanErr chan error, chanQuit <-chan bool, chanNext <-chan bool) {
 	defer wg.Done()
 
 	for {
@@ -57,17 +55,21 @@ func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan Job, chanErr chan error
 		case <-chanQuit:
 			return
 
-		case <-time.After(w.waitBetweenMessages):
+		case <-chanNext:
 
-			job, err := w.Queue.Receive()
-			if err != nil {
-				chanErr <- err
-			}
+			for {
+				job, err := w.Queue.Receive()
+				if err != nil {
+					chanErr <- err
+					break
+				}
 
-			if job == nil {
-				time.Sleep(w.waitForMessage)
-			} else {
-				chanOut <- *job
+				if job != nil {
+					chanOut <- job
+					break
+				}
+
+				// timeout occurred, try to get new message
 			}
 		}
 	}
@@ -76,18 +78,19 @@ func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan Job, chanErr chan error
 // Process routine.
 func (w Worker) Process(wg *sync.WaitGroup, chanOut chan interface{}, chanErr chan error, chanQuit <-chan bool) {
 
-	chanIn := make(chan Job, 1)
+	chanIn := make(chan *Job, 1)
 	chanQErr := make(chan error, 1)
 	chanStop := make(chan bool, 1)
 
+	// channel to signal this go routine is ready to process the next message
+	chanNext := make(chan bool, 1)
+
 	defer func() {
 		wg.Done()
-		close(chanIn)
-		close(chanQErr)
-		close(chanStop)
 	}()
 
-	go w.Consume(wg, chanIn, chanErr, chanStop)
+	go w.Consume(wg, chanIn, chanQErr, chanStop, chanNext)
+	chanNext <- true
 
 	for {
 		select {
@@ -96,21 +99,19 @@ func (w Worker) Process(wg *sync.WaitGroup, chanOut chan interface{}, chanErr ch
 			return
 
 		case err := <-chanQErr:
+			chanNext <- true
 			chanErr <- err
-
-			// signal to get the next message
-			chanStop <- false
 
 		case job := <-chanIn:
 			out, err := w.Performer.Perform(job.Args...)
 			if err != nil {
+				chanNext <- true
 				chanErr <- err
+				continue
 			}
 
+			chanNext <- true
 			chanOut <- out
-
-			// signal to get the next message
-			chanStop <- false
 		}
 	}
 }
@@ -125,7 +126,7 @@ func (w Worker) Produce(wg *sync.WaitGroup, chanIn <-chan Job, chanErr chan erro
 		case <-chanQuit:
 			return
 		case job := <-chanIn:
-			err := w.Queue.Send(job.Args)
+			err := w.Queue.Send(job)
 			if err != nil {
 				chanErr <- err
 			}
