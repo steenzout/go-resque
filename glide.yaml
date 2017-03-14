@@ -1,6 +1,6 @@
 package: github.com/steenzout/go-resque
 import:
 - package: github.com/steenzout/bash-gosweep
-- package: github.com/go-redis/redis
-  version: ^5.2.9
 - package: github.com/steenzout/go-log
+- package: gopkg.in/redis.v5
+  version: ^5.2.9
