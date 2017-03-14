@@ -25,11 +25,9 @@ import (
 
 // Worker primitive to implement producers or consumers.
 type Worker struct {
-	Name                string
-	Queue               *Queue
-	Performer           Performer
-	waitBetweenMessages time.Duration
-	waitForMessage      time.Duration
+	Name      string
+	Queue     *Queue
+	Performer Performer
 }
 
 // NewWorker creates a new JobClass pointer.
