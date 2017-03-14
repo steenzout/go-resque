@@ -17,7 +17,6 @@
 package resque
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"gopkg.in/redis.v5"
@@ -57,36 +56,52 @@ func newQueue(jcn string, c *redis.Client) (*Queue, error) {
 	return q, nil
 }
 
-// Receive gets a job from the queue.
-func (q Queue) Receive() (*Job, error) {
-	cmd := q.redis.LPop(q.Name)
-	if cmd.Err() != nil {
-		if cmd.Err().Error() == "redis: nil" {
-			return nil, nil
-		}
-		return nil, cmd.Err()
-	}
+// Peek returns from the queue the jobs at position(s) [start, stop].
+func (q Queue) Peek(start, stop int64) ([]Job, error) {
 
-	jsonStr, err := cmd.Bytes()
+	var jobs []Job
+
+	err := q.redis.LRange(q.Name, start, stop).ScanSlice(jobs)
 	if err != nil {
 		return nil, err
 	}
 
-	job := &Job{}
-	err = json.Unmarshal(jsonStr, job)
-	if err != nil {
-		return nil, err
-	}
-
-	return job, err
+	return jobs, nil
 }
 
-// Send places a job on the queue.
-func (q Queue) Send(args []JobArgument) error {
-	jsonStr, err := json.Marshal(Job{Class: q.jobClassName, Args: args})
+// Receive gets a job from the queue.
+func (q Queue) Receive() (*Job, error) {
+
+	var job Job
+
+	err := q.redis.LPop(q.Name).Scan(&job)
+	if err != nil {
+		if err.Error() == "redis: nil" {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &job, err
+}
+
+// Send places a job to the queue.
+func (q Queue) Send(job Job) error {
+
+	byteArr, err := job.MarshalBinary()
 	if err != nil {
 		return err
 	}
 
-	return q.redis.RPush(q.Name, jsonStr).Err()
+	return q.redis.RPush(q.Name, string(byteArr)).Err()
+}
+
+// Size returns the number of jobs in the queue.
+func (q Queue) Size() (int64, error) {
+	v, err := q.redis.SCard(q.Name).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	return v, err
 }
