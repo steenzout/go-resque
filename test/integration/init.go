@@ -12,9 +12,9 @@ const (
 	Package = "test.integration.main"
 
 	// RedisServer name of the environment variable that holds the name of the Redis server.
-	RedisServer = "RedisServer"
+	RedisServer = "REDIS_SERVER"
 	// RedisPort name of the environment variable that holds the port under which Redis is running.
-	RedisPort = "RedisPort"
+	RedisPort = "REDIS_PORT"
 )
 
 var (
