@@ -18,6 +18,7 @@ package resque
 
 import (
 	"fmt"
+	"time"
 
 	"gopkg.in/redis.v5"
 )
@@ -32,14 +33,16 @@ type Queue struct {
 	redis        *redis.Client
 	jobClassName string
 	Name         string
+	timeout      time.Duration
 }
 
 // newQueue initializes a Queue struct and updates the set of available Resque queues.
-func newQueue(jcn string, c *redis.Client) (*Queue, error) {
+func newQueue(jcn string, c *redis.Client, timeout time.Duration) (*Queue, error) {
 	q := &Queue{
 		redis:        c,
 		jobClassName: jcn,
 		Name:         fmt.Sprintf("resque:queue:%s", jcn),
+		timeout:      timeout,
 	}
 
 	exists, err := c.SIsMember(Queues, jcn).Result()
@@ -74,11 +77,16 @@ func (q Queue) Receive() (*Job, error) {
 
 	var job Job
 
-	err := q.redis.LPop(q.Name).Scan(&job)
+	v, err := q.redis.BLPop(q.timeout, q.Name).Result()
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			return nil, nil
 		}
+		return nil, err
+	}
+
+	err = job.UnmarshalBinary([]byte(v[1]))
+	if err != nil {
 		return nil, err
 	}
 
@@ -98,7 +106,7 @@ func (q Queue) Send(job Job) error {
 
 // Size returns the number of jobs in the queue.
 func (q Queue) Size() (int64, error) {
-	v, err := q.redis.SCard(q.Name).Result()
+	v, err := q.redis.LLen(q.Name).Result()
 	if err != nil {
 		return 0, err
 	}
