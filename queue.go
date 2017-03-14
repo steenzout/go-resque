@@ -36,8 +36,8 @@ type Queue struct {
 	timeout      time.Duration
 }
 
-// newQueue initializes a Queue struct and updates the set of available Resque queues.
-func newQueue(jcn string, c *redis.Client, timeout time.Duration) (*Queue, error) {
+// NewQueue initializes a Queue struct and updates the set of available Resque queues.
+func NewQueue(jcn string, c *redis.Client, timeout time.Duration) (*Queue, error) {
 	q := &Queue{
 		redis:        c,
 		jobClassName: jcn,
