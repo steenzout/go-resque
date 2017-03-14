@@ -16,6 +16,10 @@
 
 package resque
 
+import (
+	"encoding/json"
+)
+
 // JobArgument represent a single argument.
 type JobArgument interface{}
 
@@ -32,4 +36,14 @@ type JobArgument interface{}
 type Job struct {
 	Class string        `json:"class"`
 	Args  []JobArgument `json:"args"`
+}
+
+// MarshalBinary encodes itself into a binary format.
+func (j Job) MarshalBinary() ([]byte, error) {
+	return json.Marshal(j)
+}
+
+// UnmarshalBinary decodes the binary representation into itself.
+func (j *Job) UnmarshalBinary(b []byte) error {
+	return json.Unmarshal(b, j)
 }
