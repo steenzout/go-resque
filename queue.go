@@ -1,3 +1,5 @@
+package resque
+
 //
 // Copyright 2017 Pedro Salgado
 //
@@ -13,8 +15,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
-package resque
 
 import (
 	"fmt"
