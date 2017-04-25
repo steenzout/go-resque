@@ -1,3 +1,5 @@
+package resque
+
 //
 // Copyright 2017 Pedro Salgado
 //
@@ -14,120 +16,22 @@
 // limitations under the License.
 //
 
-package resque
-
-import (
-	"sync"
-	"time"
-
-	"gopkg.in/redis.v5"
-)
-
-// Worker primitive to implement producers or consumers.
+// Worker base struct to build consumers and producers.
 type Worker struct {
-	Name      string
-	Queue     *Queue
-	Performer Performer
+	queue Queue
 }
 
-// NewWorker creates a new JobClass pointer.
-func NewWorker(n string, c *redis.Client, p Performer, timeout time.Duration) (*Worker, error) {
-	q, err := NewQueue(n, c, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Worker{
-		Name:      n,
-		Queue:     q,
-		Performer: p,
-	}, nil
+// NewWorker creates a new worker pointer.
+func NewWorker() *Worker {
+	return &Worker{}
 }
 
-// Consume routine.
-func (w Worker) Consume(wg *sync.WaitGroup, chanOut chan *Job, chanErr chan error, chanQuit <-chan bool, chanNext <-chan bool) {
-	defer wg.Done()
-
-	for {
-		select {
-		case <-chanQuit:
-			return
-
-		case <-chanNext:
-
-			for {
-				job, err := w.Queue.Receive()
-				if err != nil {
-					chanErr <- err
-					break
-				}
-
-				if job != nil {
-					chanOut <- job
-					break
-				}
-
-				// timeout occurred, try to get new message
-			}
-		}
-	}
+// Queue returns the queue.
+func (w *Worker) Queue() Queue {
+	return w.queue
 }
 
-// Process routine.
-func (w Worker) Process(wg *sync.WaitGroup, chanOut chan interface{}, chanErr chan error, chanQuit <-chan bool) {
-
-	chanIn := make(chan *Job, 1)
-	chanQErr := make(chan error, 1)
-	chanStop := make(chan bool, 1)
-
-	// channel to signal this go routine is ready to process the next message
-	chanNext := make(chan bool, 1)
-
-	defer func() {
-		wg.Done()
-	}()
-
-	go w.Consume(wg, chanIn, chanQErr, chanStop, chanNext)
-	chanNext <- true
-
-	for {
-		select {
-		case <-chanQuit:
-			chanStop <- true
-			return
-
-		case err := <-chanQErr:
-			chanNext <- true
-			chanErr <- err
-
-		case job := <-chanIn:
-			out, err := w.Performer.Perform(job.Args...)
-			if err != nil {
-				chanNext <- true
-				chanErr <- err
-				continue
-			}
-
-			chanNext <- true
-			chanOut <- out
-		}
-	}
-}
-
-// Produce routine.
-func (w Worker) Produce(wg *sync.WaitGroup, chanIn <-chan Job, chanErr chan error, chanQuit <-chan bool) {
-
-	defer wg.Done()
-
-	for {
-		select {
-		case <-chanQuit:
-			return
-		case job := <-chanIn:
-			err := w.Queue.Send(job)
-			if err != nil {
-				chanErr <- err
-			}
-		}
-	}
+// SetQueue assign a Queue.
+func (w *Worker) SetQueue(q Queue) {
+	w.queue = q
 }
