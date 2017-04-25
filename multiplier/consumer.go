@@ -18,8 +18,6 @@ package multiplier
 
 import (
 	"fmt"
-	"time"
-
 	"os"
 	"sync"
 
@@ -40,11 +38,12 @@ func NewConsumer() *Consumer {
 
 // Consume returns the multiplication of the given arguments.
 func (c *Consumer) Consume(args ...resque.JobArgument) (interface{}, error) {
-	job := NewJobFromArgs(args)
+	fmt.Printf("[multiplier/consumer] DEBUG args %v\n", args)
+
+	job := NewJobFromArgs(args...)
 	output := job.Arg1 * job.Arg2
 
-	time.Sleep(100 * time.Millisecond)
-	fmt.Fprintf(os.Stdout, "[multiplier] DEBUG %.0f * %.0f = %.0f", job.Arg1, job.Arg2, output)
+	fmt.Printf("[multiplier/consumer] DEBUG %.0f * %.0f = %.0f\n", job.Arg1, job.Arg2, output)
 
 	return output, nil
 }
@@ -53,48 +52,51 @@ func (c *Consumer) Consume(args ...resque.JobArgument) (interface{}, error) {
 func (c *Consumer) Run(wg *sync.WaitGroup, chanOut chan float64, chanExit <-chan bool) {
 	defer wg.Done()
 
-	chanRJob := make(chan *resque.Job, 1)
-	defer close(chanRJob)
-
-	chanRErr := make(chan error, 1)
-	defer close(chanRErr)
-
-	chanRExit := make(chan bool, 1)
-	defer close(chanRExit)
+	chanJob := make(chan *resque.Job, 1)
+	chanErr := make(chan error, 1)
+	chanQuit := make(chan bool, 1)
 
 	// channel to signal this go routine is ready to process the next message
-	chanRNext := make(chan bool, 1)
-	defer close(chanRNext)
+	chanNext := make(chan bool, 1)
 
 	var localWG sync.WaitGroup
-	defer localWG.Wait()
 
 	localWG.Add(1)
-	go c.Subscribe(&localWG, chanRJob, chanRErr, chanRNext, chanRExit)
+	go c.Subscribe(&localWG, chanJob, chanErr, chanNext, chanQuit)
+	defer func() {
+		fmt.Println("[multiplier/consumer.go] INFO waiting for subscription to timeout")
+		localWG.Wait()
+		close(chanNext)
+		close(chanJob)
+		close(chanErr)
+		close(chanQuit)
+	}()
 
 	// signal ready to receive messages
-	chanRNext <- true
+	chanNext <- true
 
 	for {
 		select {
 		case <-chanExit:
-			chanRExit <- true
+			chanQuit <- true
+			fmt.Println("multiplier/consumer.go: exit")
 			return
 
-		case err := <-chanRErr:
-			fmt.Fprintf(os.Stderr, "[multiplier] ERROR %s\n", err.Error())
-			chanRNext <- true
+		case err := <-chanErr:
+			fmt.Fprintf(os.Stderr, "[multiplier/consumer] ERROR %s\n", err.Error())
+			chanNext <- true
 
-		case job := <-chanRJob:
+		case job := <-chanJob:
+			fmt.Printf("[multiplier/consumer] got job %s\n", job)
 			out, err := c.Consume(job.Args...)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "[multiplier] ERROR %s\n", err.Error())
-				chanRNext <- true
+				chanNext <- true
 				continue
 			}
-			fmt.Fprintf(os.Stdout, "[multiplier] INFO %d\n", out)
+			fmt.Printf("[multiplier] INFO %d\n", out)
 			chanOut <- out.(float64)
-			chanRNext <- true
+			chanNext <- true
 		}
 	}
 }
