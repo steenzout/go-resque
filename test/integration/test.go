@@ -55,37 +55,35 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	qRedis := queue.(*resque.RedisQueue)
-	fmt.Fprintf(os.Stdout, "[%s] INFO queue %s created\n", Package, queue.Name)
+	qRedis := queue.(*multiplier.Queue)
+	fmt.Fprintf(os.Stdout, "[%s] INFO queue %s created\n", Package, queue.Name())
 
 	pChanIn := make(chan *resque.Job, 1)
-	defer close(pChanIn)
-
 	pChanErr := make(chan error, 1)
-	defer close(pChanErr)
-
 	pChanExit := make(chan bool, 1)
-	defer close(pChanExit)
 
 	chanInterrupt := make(chan os.Signal, 1)
-	defer close(chanInterrupt)
 
 	signal.Notify(chanInterrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	cChanOut := make(chan float64, 1)
-	defer close(cChanOut)
-
 	cChanErr := make(chan error, 2)
-	defer close(cChanErr)
-
 	cChanExit := make(chan bool, 1)
-	defer close(cChanExit)
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go producer.Publish(&wg, pChanIn, pChanErr, pChanExit)
-	defer wg.Wait()
+	defer func() {
+		wg.Wait()
+		close(pChanIn)
+		close(pChanErr)
+		close(pChanExit)
+		close(chanInterrupt)
+		close(cChanOut)
+		close(cChanErr)
+		close(cChanExit)
+	}()
 
 	wg.Add(1)
 	go consumer.Run(&wg, cChanOut, cChanExit)
