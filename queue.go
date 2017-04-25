@@ -55,7 +55,7 @@ func NewRedisQueue(name string, rc *redis.Client, timeout time.Duration, c Consu
 	q := &RedisQueue{
 		redis:     rc,
 		name:      name,
-		queueName: fmt.Sprintf("resque:Queue:%s", name),
+		queueName: fmt.Sprintf("resque:queue:%s", name),
 		timeout:   timeout,
 		consumer:  c,
 		producer:  p,
