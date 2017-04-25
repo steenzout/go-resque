@@ -28,29 +28,51 @@ const (
 	Queues = "resque:queues"
 )
 
-// Queue a job queue.
-type Queue struct {
-	redis        *redis.Client
-	jobClassName string
-	Name         string
-	timeout      time.Duration
+// Queue Queue interface.
+type Queue interface {
+	Consumer() Consumer
+	Name() string
+	Producer() Producer
+	Receive() (*Job, error)
+	Send(job *Job) error
 }
 
-// NewQueue initializes a Queue struct and updates the set of available Resque queues.
-func NewQueue(jcn string, c *redis.Client, timeout time.Duration) (*Queue, error) {
-	q := &Queue{
-		redis:        c,
-		jobClassName: jcn,
-		Name:         fmt.Sprintf("resque:queue:%s", jcn),
-		timeout:      timeout,
+// RedisQueue a job RedisQueue.
+type RedisQueue struct {
+	redis   *redis.Client
+	name    string
+	timeout time.Duration
+	// queueName name of the Queue.
+	queueName string
+	// Consumer Resque job consumer.
+	consumer Consumer
+	// Producer Resque job producer.
+	producer Producer
+}
+
+// NewRedisQueue initializes a RedisQueue struct and updates the set of available Resque queues.
+func NewRedisQueue(name string, rc *redis.Client, timeout time.Duration, c Consumer, p Producer) (*RedisQueue, error) {
+	q := &RedisQueue{
+		redis:     rc,
+		name:      name,
+		queueName: fmt.Sprintf("resque:Queue:%s", name),
+		timeout:   timeout,
+		consumer:  c,
+		producer:  p,
+	}
+	if c != nil {
+		c.SetQueue(q)
+	}
+	if p != nil {
+		p.SetQueue(q)
 	}
 
-	exists, err := c.SIsMember(Queues, jcn).Result()
+	exists, err := rc.SIsMember(Queues, name).Result()
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		_, err := c.SAdd(Queues, jcn).Result()
+		_, err := rc.SAdd(Queues, name).Result()
 		if err != nil {
 			return nil, err
 		}
@@ -59,12 +81,27 @@ func NewQueue(jcn string, c *redis.Client, timeout time.Duration) (*Queue, error
 	return q, nil
 }
 
-// Peek returns from the queue the jobs at position(s) [start, stop].
-func (q Queue) Peek(start, stop int64) ([]Job, error) {
+// Consumer returns this Queue's consumer.
+func (rq *RedisQueue) Consumer() Consumer {
+	return rq.consumer
+}
+
+// Name returns the Queue name.
+func (rq *RedisQueue) Name() string {
+	return rq.name
+}
+
+// Producer returns this Queue's producer.
+func (rq *RedisQueue) Producer() Producer {
+	return rq.producer
+}
+
+// Peek returns from the RedisQueue the jobs at position(s) [start, stop].
+func (rq *RedisQueue) Peek(start, stop int64) ([]Job, error) {
 
 	var jobs []Job
 
-	err := q.redis.LRange(q.Name, start, stop).ScanSlice(jobs)
+	err := rq.redis.LRange(rq.queueName, start, stop).ScanSlice(jobs)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +109,12 @@ func (q Queue) Peek(start, stop int64) ([]Job, error) {
 	return jobs, nil
 }
 
-// Receive gets a job from the queue.
-func (q Queue) Receive() (*Job, error) {
+// Receive gets a job from the RedisQueue.
+func (rq *RedisQueue) Receive() (*Job, error) {
 
 	var job Job
 
-	v, err := q.redis.BLPop(q.timeout, q.Name).Result()
+	v, err := rq.redis.BLPop(rq.timeout, rq.queueName).Result()
 	if err != nil {
 		if err.Error() == "redis: nil" {
 			return nil, nil
@@ -93,20 +130,20 @@ func (q Queue) Receive() (*Job, error) {
 	return &job, err
 }
 
-// Send places a job to the queue.
-func (q Queue) Send(job Job) error {
+// Send places a job to the RedisQueue.
+func (rq *RedisQueue) Send(job *Job) error {
 
 	byteArr, err := job.MarshalBinary()
 	if err != nil {
 		return err
 	}
 
-	return q.redis.RPush(q.Name, string(byteArr)).Err()
+	return rq.redis.RPush(rq.queueName, string(byteArr)).Err()
 }
 
-// Size returns the number of jobs in the queue.
-func (q Queue) Size() (int64, error) {
-	v, err := q.redis.LLen(q.Name).Result()
+// Size returns the number of jobs in the RedisQueue.
+func (rq *RedisQueue) Size() (int64, error) {
+	v, err := rq.redis.LLen(rq.queueName).Result()
 	if err != nil {
 		return 0, err
 	}
