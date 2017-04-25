@@ -43,7 +43,7 @@ func (c *Consumer) Consume(args ...resque.JobArgument) (interface{}, error) {
 	job := NewJobFromArgs(args...)
 	output := job.Arg1 * job.Arg2
 
-	fmt.Printf("[multiplier/consumer] DEBUG %.0f * %.0f = %.0f\n", job.Arg1, job.Arg2, output)
+	fmt.Printf("[multiplier/consumer] DEBUG %f * %f = %f\n", job.Arg1, job.Arg2, output)
 
 	return output, nil
 }
@@ -94,7 +94,7 @@ func (c *Consumer) Run(wg *sync.WaitGroup, chanOut chan float64, chanExit <-chan
 				chanNext <- true
 				continue
 			}
-			fmt.Printf("[multiplier/consumer] INFO %0.2f\n", out)
+			fmt.Printf("[multiplier/consumer] INFO %f\n", out)
 			chanOut <- out.(float64)
 			chanNext <- true
 		}
