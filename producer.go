@@ -60,7 +60,7 @@ func (bp *BaseProducer) Publish(wg *sync.WaitGroup, chanIn <-chan *Job, chanErr 
 			return
 		case job := <-chanIn:
 			err := bp.queue.Send(job)
-			if chanErr != nil {
+			if err != nil {
 				chanErr <- err
 			}
 		}
