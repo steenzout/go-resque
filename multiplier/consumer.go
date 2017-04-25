@@ -94,7 +94,7 @@ func (c *Consumer) Run(wg *sync.WaitGroup, chanOut chan float64, chanExit <-chan
 				chanNext <- true
 				continue
 			}
-			fmt.Printf("[multiplier] INFO %d\n", out)
+			fmt.Printf("[multiplier/consumer] INFO %0.2f\n", out)
 			chanOut <- out.(float64)
 			chanNext <- true
 		}
