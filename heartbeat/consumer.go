@@ -43,11 +43,11 @@ func (c *Consumer) Consume(args ...resque.JobArgument) (interface{}, error) {
 
 	rfc3339Ts, err := time.Parse(time.RFC3339, job.Timestamp)
 	if err != nil {
-		fmt.Fprintf(os.Stdout, "[heartbeat] INFO daemon %s id %s timestamp %s\n", job.Name, job.ID, job.Timestamp)
+		fmt.Printf("[heartbeat] INFO daemon %s id %s timestamp %s\n", job.Name, job.ID, job.Timestamp)
 		return nil, fmt.Errorf("timestamp %s is not in the RFC3339 format", job.Timestamp)
 	}
 
-	fmt.Fprintf(os.Stdout, "[heartbeat] INFO daemon %s id %s timestamp %s\n", job.Name, job.ID, rfc3339Ts)
+	fmt.Printf("[heartbeat] INFO daemon %s id %s timestamp %s\n", job.Name, job.ID, rfc3339Ts)
 
 	return job, nil
 }
@@ -70,10 +70,10 @@ func (c *Consumer) Run(wg *sync.WaitGroup, chanExit <-chan bool) {
 	defer close(chanRNext)
 
 	var localWG sync.WaitGroup
-	defer localWG.Wait()
 
 	localWG.Add(1)
 	go c.Subscribe(&localWG, chanRJob, chanRErr, chanRNext, chanRExit)
+	defer localWG.Wait()
 
 	// signal ready to receive messages
 	chanRNext <- true
