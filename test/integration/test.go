@@ -45,9 +45,9 @@ func main() {
 		DB:       0,                      // use default DB
 	})
 	defer client.Close()
-	fmt.Fprintf(os.Stdout, "[%s] INFO Redis client set %v\n", Package, client)
+	fmt.Printf("[%s] INFO Redis client set %v\n", Package, client)
 
-	waitForMessage := time.Duration(1 * time.Second)
+	waitForMessage := time.Duration(10 * time.Second)
 
 	consumer := multiplier.NewConsumer()
 	producer := multiplier.NewProducer()
@@ -56,47 +56,49 @@ func main() {
 		panic(err)
 	}
 	qRedis := queue.(*multiplier.Queue)
-	fmt.Fprintf(os.Stdout, "[%s] INFO queue %s created\n", Package, queue.Name())
+	fmt.Printf("[%s] INFO queue %s created\n", Package, queue.Name())
 
 	pChanIn := make(chan *resque.Job, 1)
 	pChanErr := make(chan error, 1)
 	pChanExit := make(chan bool, 1)
 
-	chanInterrupt := make(chan os.Signal, 1)
-
-	signal.Notify(chanInterrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
-
 	cChanOut := make(chan float64, 1)
-	cChanErr := make(chan error, 2)
 	cChanExit := make(chan bool, 1)
+
+	chanInterrupt := make(chan os.Signal, 1)
+	signal.Notify(chanInterrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
 	go producer.Publish(&wg, pChanIn, pChanErr, pChanExit)
 	defer func() {
+		fmt.Println("waiting for routines")
 		wg.Wait()
 		close(pChanIn)
 		close(pChanErr)
 		close(pChanExit)
 		close(chanInterrupt)
 		close(cChanOut)
-		close(cChanErr)
 		close(cChanExit)
 	}()
+	fmt.Printf("[%s] producer started...\n", Package)
 
 	wg.Add(1)
 	go consumer.Run(&wg, cChanOut, cChanExit)
+	fmt.Printf("[%s] consumer started...\n", Package)
 
 	// wait time to wait between producing messages
 	wait := time.Duration(5 * time.Second)
+
+	rand.Seed(42)
 
 	// loop until we get an exit signal
 	for {
 		select {
 		case killSignal := <-chanInterrupt:
 			// handle chanInterrupt signal
-			fmt.Fprintf(os.Stdout, "[%s] INFO main got signal %s\n", Package, killSignal.String())
+			fmt.Printf("[%s] INFO main got signal %s\n", Package, killSignal.String())
 			pChanExit <- true
 			cChanExit <- true
 			return
@@ -104,30 +106,27 @@ func main() {
 		case err := <-pChanErr:
 			fmt.Fprintf(os.Stderr, "[%s] ERROR Producer error: %s\n", Package, err.Error())
 
-		case err := <-cChanErr:
-			fmt.Fprintf(os.Stderr, "[%s] ERROR Consumer error %s\n", Package, err.Error())
-
 		case value := <-cChanOut:
-			fmt.Fprintf(os.Stdout, "[%s] INFO job output = %v\n", Package, value)
+			fmt.Printf("[%s] INFO job output = %v\n", Package, value)
 
 			size, err := qRedis.Size()
 			if err == nil {
-				fmt.Fprintf(os.Stdout, "[%s] INFO queue %s has %d jobs\n", Package, queue.Name(), size)
+				fmt.Printf("[%s] INFO queue %s has %d jobs\n", Package, queue.Name(), size)
 			}
 
 		case <-time.After(wait):
 			// generate a new Multiplier random job
-			rand.Seed(42)
 			job := multiplier.NewJob(rand.Float64(), rand.Float64())
 
 			// queue job
 			pChanIn <- job
 
-			fmt.Fprintf(os.Stdout, "[%s] INFO sent request to queue 1 job %s: %v\n", Package, job.Class, job.Args)
+			fmt.Printf("[%s] INFO sent request to queue 1 job %s: %v\n", Package, job.Class, job.Args)
 			size, err := qRedis.Size()
-			if err == nil {
-				fmt.Fprintf(os.Stdout, "[%s] INFO queue %s has %d jobs\n", Package, queue.Name(), size)
+			if err != nil {
+				fmt.Printf("[%s] ERROR %s\n", Package, err)
 			}
+			fmt.Printf("[%s] INFO queue %s has %d jobs\n", Package, queue.Name(), size)
 		}
 	}
 }
