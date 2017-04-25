@@ -52,15 +52,9 @@ func (c *Consumer) Consume(args ...resque.JobArgument) (interface{}, error) {
 func (c *Consumer) Run(wg *sync.WaitGroup, chanOut chan float64, chanExit <-chan bool) {
 	defer wg.Done()
 
-	chanJob := make(chan *resque.Job, 1)
-	chanErr := make(chan error, 1)
-	chanQuit := make(chan bool, 1)
-
-	// channel to signal this go routine is ready to process the next message
-	chanNext := make(chan bool, 1)
+	chanJob, chanErr, chanQuit, chanNext := getChannels()
 
 	var localWG sync.WaitGroup
-
 	localWG.Add(1)
 	go c.Subscribe(&localWG, chanJob, chanErr, chanNext, chanQuit)
 	defer func() {
@@ -99,4 +93,14 @@ func (c *Consumer) Run(wg *sync.WaitGroup, chanOut chan float64, chanExit <-chan
 			chanNext <- true
 		}
 	}
+}
+
+// getChannels creates channels to communicate with the routine.
+func getChannels() (chan *resque.Job, chan error, chan bool, chan bool) {
+	chanJob := make(chan *resque.Job, 1)
+	chanErr := make(chan error, 1)
+	chanQuit := make(chan bool, 1)
+	// channel to signal this go routine is ready to process the next message
+	chanNext := make(chan bool, 1)
+	return chanJob, chanErr, chanQuit, chanNext
 }

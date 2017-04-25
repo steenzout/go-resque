@@ -47,24 +47,18 @@ func NewConsumer() *Consumer {
 func (c *Consumer) Run(wg *sync.WaitGroup, chanExit <-chan bool) {
 	defer wg.Done()
 
-	chanRJob := make(chan *resque.Job, 1)
-	defer close(chanRJob)
-
-	chanRErr := make(chan error, 1)
-	defer close(chanRErr)
-
-	chanRExit := make(chan bool, 1)
-	defer close(chanRExit)
-
-	// channel to signal this go routine is ready to process the next message
-	chanRNext := make(chan bool, 1)
-	defer close(chanRNext)
+	chanRJob, chanRErr, chanRExit, chanRNext := getChannels()
 
 	var localWG sync.WaitGroup
-
 	localWG.Add(1)
 	go c.Subscribe(&localWG, chanRJob, chanRErr, chanRNext, chanRExit)
-	defer localWG.Wait()
+	defer func() {
+		localWG.Wait()
+		close(chanRJob)
+		close(chanRErr)
+		close(chanRExit)
+		close(chanRNext)
+	}()
 
 	// signal ready to receive messages
 	chanRNext <- true
@@ -89,4 +83,14 @@ func (c *Consumer) Run(wg *sync.WaitGroup, chanExit <-chan bool) {
 			chanRNext <- true
 		}
 	}
+}
+
+// getChannels creates channels to communicate with the routine.
+func getChannels() (chan *resque.Job, chan error, chan bool, chan bool) {
+	chanRJob := make(chan *resque.Job, 1)
+	chanRErr := make(chan error, 1)
+	chanRExit := make(chan bool, 1)
+	// channel to signal this go routine is ready to process the next message
+	chanRNext := make(chan bool, 1)
+	return chanRJob, chanRErr, chanRExit, chanRNext
 }
