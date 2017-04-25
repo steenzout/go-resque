@@ -32,7 +32,7 @@ type Consumer struct {
 
 // Consume prints the contents of the Resque job message.
 func (c *Consumer) Consume(args ...resque.JobArgument) (interface{}, error) {
-	fmt.Fprintf(os.Stdout, "[debug] DEBUG queue %s arguments %v", c.Queue().Name(), args)
+	fmt.Printf("[debug] DEBUG queue %s arguments %v", c.Queue().Name(), args)
 	return nil, nil
 }
 
@@ -61,10 +61,10 @@ func (c *Consumer) Run(wg *sync.WaitGroup, chanExit <-chan bool) {
 	defer close(chanRNext)
 
 	var localWG sync.WaitGroup
-	defer localWG.Wait()
 
 	localWG.Add(1)
 	go c.Subscribe(&localWG, chanRJob, chanRErr, chanRNext, chanRExit)
+	defer localWG.Wait()
 
 	// signal ready to receive messages
 	chanRNext <- true
