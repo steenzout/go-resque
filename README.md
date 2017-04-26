@@ -6,6 +6,8 @@
 [![Project Stats](https://www.openhub.net/p/go-steenzout-resque/widgets/project_thin_badge.gif)](https://www.openhub.net/p/go-steenzout-resque/)
 [![Coverage Status](https://coveralls.io/repos/steenzout/go-resque/badge.svg?branch=master&service=github)](https://coveralls.io/github/steenzout/go-resque?branch=master)
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/steenzout/go-resque)](https://goreportcard.com/report/github.com/steenzout/go-resque)
+
 [Resque][resque] client in [Go][go].
 
 
