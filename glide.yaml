@@ -2,3 +2,5 @@ package: github.com/steenzout/go-resque
 import:
 - package: gopkg.in/redis.v5
   version: ^5.2.9
+- package: github.com/steenzout/go-env
+  version: ^1.0.2
