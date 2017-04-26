@@ -19,7 +19,7 @@ env:
     GOCYCLO_COMPLEXITY=7
 
 install:
-  - go get -v -u github.com/client9/misspell/cmd/misspell
+  - go get -v -u github.com/client9/misspell
   - go get -v -u github.com/fzipp/gocyclo
   - go get -v -u github.com/h12w/gosweep
   - go get -v -u github.com/mattn/goveralls
