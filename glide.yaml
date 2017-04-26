@@ -1,5 +1,4 @@
 package: github.com/steenzout/go-resque
 import:
-- package: github.com/steenzout/bash-gosweep
 - package: gopkg.in/redis.v5
   version: ^5.2.9
