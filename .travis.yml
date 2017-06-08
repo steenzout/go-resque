@@ -15,8 +15,7 @@ go:
 sudo: false
 
 env:
-  - CI_SERVICE=travis-ci
-    GOCYCLO_COMPLEXITY=7
+  CI_SERVICE=travis-ci
 
 install:
   - go get -v -u github.com/client9/misspell/cmd/misspell
