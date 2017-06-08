@@ -11,8 +11,8 @@ type PackageTestSuite struct {
 	suite.Suite
 }
 
-// Test runs package tests.
-func Test(t *testing.T) {
+// TestPackage run all test suites included in this package.
+func TestPackage(t *testing.T) {
 	// ordered by dependencies
 	suite.Run(t, new(ConsumerTestSuite))
 	suite.Run(t, new(QueueTestSuite))
